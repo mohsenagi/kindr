@@ -42,6 +42,13 @@ def test_get_availability_raises_validation_when_date_missing():
         _run(service.get_availability(None))
 
 
+def test_get_availability_raises_validation_when_date_invalid_format():
+    service = AppointmentService(api_query_service=_FakeAppointmentApiQueryService())
+
+    with pytest.raises(ValidationException):
+        _run(service.get_availability("06/15/2027"))
+
+
 def test_get_availability_delegates_to_query_service():
     fake = _FakeAppointmentApiQueryService()
     service = AppointmentService(api_query_service=fake)
@@ -114,3 +121,22 @@ def test_book_appointment_recovers_idempotent_conflict():
     assert first.status == "confirmed"
     assert second.status == "confirmed"
     assert first.confirmation_number == second.confirmation_number
+
+
+def test_book_appointment_conflict_for_regular_reason_is_not_recovered():
+    class _ConflictApiQueryService(_FakeAppointmentApiQueryService):
+        async def query_book_appointment(self, request):
+            raise ConflictException("Time slot no longer available")
+
+    service = AppointmentService(api_query_service=_ConflictApiQueryService())
+
+    payload = {
+        "patient_id": "P001",
+        "dentist_id": "D002",
+        "appointment_date": "2027-07-09",
+        "appointment_time": "15:30",
+        "reason": "Regular checkup",
+    }
+
+    with pytest.raises(ConflictException):
+        _run(service.book_appointment(payload))

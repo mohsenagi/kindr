@@ -159,3 +159,34 @@ def test_query_book_appointment_conflict_raises(monkeypatch):
 
     with pytest.raises(ConflictException):
         _run(service.query_book_appointment(request))
+
+
+def test_query_patient_by_phone_handles_false_insurance_and_invalid_dates(monkeypatch):
+    service = DentalTrackApiQueryService()
+
+    async def fake_post_json(path, payload, **kwargs):
+        return {
+            "soap:Envelope": {
+                "soap:Body": {
+                    "GetPatientResponse": {
+                        "Patient": {
+                            "patientId": "P002",
+                            "firstName": "Sara",
+                            "lastName": "Lee",
+                            "phoneNumber": "555-987-6543",
+                            "dob": "invalid-date",
+                            "insuranceActive": "N",
+                            "lastVisit": "2024-99-99",
+                        }
+                    }
+                }
+            }
+        }
+
+    monkeypatch.setattr(service, "_post_json", fake_post_json)
+
+    patient = _run(service.query_patient_by_phone("5559876543"))
+
+    assert patient.has_active_insurance is False
+    assert patient.date_of_birth is None
+    assert patient.last_visit_date is None
