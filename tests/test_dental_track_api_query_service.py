@@ -16,7 +16,7 @@ def _run(coro):
 def test_query_patient_by_phone_normalizes_fields(monkeypatch):
     service = DentalTrackApiQueryService()
 
-    async def fake_post_json(path, payload):
+    async def fake_post_json(path, payload, **kwargs):
         assert path == "/soap/PatientService"
         assert payload["phoneNumber"] == "5551234567"
         return {
@@ -52,7 +52,7 @@ def test_query_patient_by_phone_normalizes_fields(monkeypatch):
 def test_query_patient_by_phone_returns_none_when_not_found(monkeypatch):
     service = DentalTrackApiQueryService()
 
-    async def fake_post_json(path, payload):
+    async def fake_post_json(path, payload, **kwargs):
         return {
             "soap:Envelope": {
                 "soap:Body": {
@@ -71,7 +71,7 @@ def test_query_patient_by_phone_returns_none_when_not_found(monkeypatch):
 def test_query_availability_filters_lunch_and_dentist(monkeypatch):
     service = DentalTrackApiQueryService()
 
-    async def fake_post_json(path, payload):
+    async def fake_post_json(path, payload, **kwargs):
         assert path == "/soap/AppointmentService/GetAvailability"
         assert payload["date"] == "2027-06-15"
         return {
@@ -100,7 +100,7 @@ def test_query_availability_filters_lunch_and_dentist(monkeypatch):
 def test_query_book_appointment_maps_success(monkeypatch):
     service = DentalTrackApiQueryService()
 
-    async def fake_post_json(path, payload):
+    async def fake_post_json(path, payload, **kwargs):
         assert path == "/soap/AppointmentService/BookAppointment"
         assert payload["patientId"] == "P001"
         return {
@@ -135,7 +135,7 @@ def test_query_book_appointment_maps_success(monkeypatch):
 def test_query_book_appointment_conflict_raises(monkeypatch):
     service = DentalTrackApiQueryService()
 
-    async def fake_post_json(path, payload):
+    async def fake_post_json(path, payload, **kwargs):
         return {
             "soap:Envelope": {
                 "soap:Body": {

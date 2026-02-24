@@ -45,6 +45,13 @@ class BadRequestException(ProblemDetailsException):
         super().__init__(400, "Bad Request", "BAD_REQUEST", detail)
 
 
+class ValidationException(ProblemDetailsException):
+    """HTTP 400 validation exception for request validation failures."""
+
+    def __init__(self, detail: str = "Validation failed", field: str | None = None):
+        super().__init__(400, "Validation Error", "VALIDATION_ERROR", detail, field=field)
+
+
 class NotFoundException(ProblemDetailsException):
     """HTTP 404 exception."""
 

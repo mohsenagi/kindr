@@ -53,7 +53,12 @@ class DentalTrackApiQueryService:
         Returns `None` if patient does not exist.
         """
         payload = {"phoneNumber": self._normalize_phone_for_legacy(phone_number)}
-        response_json = await self._post_json("/soap/PatientService", payload)
+        response_json = await self._post_json(
+            "/soap/PatientService",
+            payload,
+            timeout_seconds=0.9,
+            max_attempts=3,
+        )
 
         body = self._soap_body(response_json)
         patient_not_found = body.get("PatientNotFound")
@@ -80,7 +85,12 @@ class DentalTrackApiQueryService:
         if dentist_id:
             payload["dentist_id"] = dentist_id
 
-        response_json = await self._post_json("/soap/AppointmentService/GetAvailability", payload)
+        response_json = await self._post_json(
+            "/soap/AppointmentService/GetAvailability",
+            payload,
+            timeout_seconds=2.5,
+            max_attempts=4,
+        )
         body = self._soap_body(response_json)
         raw_slots = body.get("GetAvailabilityResponse", {}).get("Slots", [])
 
@@ -117,7 +127,12 @@ class DentalTrackApiQueryService:
             "reason": request.reason,
         }
 
-        response_json = await self._post_json("/soap/AppointmentService/BookAppointment", payload)
+        response_json = await self._post_json(
+            "/soap/AppointmentService/BookAppointment",
+            payload,
+            timeout_seconds=2.5,
+            max_attempts=4,
+        )
         body = self._soap_body(response_json)
         booking_response = body.get("BookAppointmentResponse", {})
 
@@ -137,28 +152,36 @@ class DentalTrackApiQueryService:
             status=str(status_text).lower(),
         )
 
-    async def _post_json(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    async def _post_json(
+        self,
+        path: str,
+        payload: dict[str, Any],
+        timeout_seconds: float | None = None,
+        max_attempts: int | None = None,
+    ) -> dict[str, Any]:
         """POST JSON to legacy endpoint with retry and deterministic error mapping."""
         url = f"{self.base_url}{path}"
         last_exception: Exception | None = None
+        timeout_value = timeout_seconds if timeout_seconds is not None else self.timeout_seconds
+        attempts = max_attempts if max_attempts is not None else self.max_attempts
 
-        for attempt in range(1, self.max_attempts + 1):
+        for attempt in range(1, attempts + 1):
             try:
-                async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+                async with httpx.AsyncClient(timeout=timeout_value) as client:
                     response = await client.post(url, json=payload)
             except httpx.TimeoutException as exc:
                 last_exception = exc
-                if attempt == self.max_attempts:
+                if attempt == attempts:
                     raise GatewayTimeoutException("Legacy API request timed out") from exc
                 continue
             except httpx.HTTPError as exc:
                 last_exception = exc
-                if attempt == self.max_attempts:
+                if attempt == attempts:
                     raise ServiceUnavailableException("Legacy API connection failed") from exc
                 continue
 
             if response.status_code in (500, 502, 503, 504):
-                if attempt == self.max_attempts:
+                if attempt == attempts:
                     raise ServiceUnavailableException("Legacy API is temporarily unavailable")
                 continue
 
