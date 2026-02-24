@@ -40,6 +40,11 @@ To run the project and tests locally:
    - Use differentiated expiry windows by entity type (patient lookup vs availability vs booking/idempotency records).
    - Add cache invalidation/update hooks for booking events.
 
+3. **Modernize dependency management (`pyproject.toml`)**
+   - Consider moving from `requirements.txt`-only workflow to a `pyproject.toml`-based setup.
+   - This is the more modern Python packaging direction and improves metadata/dependency organization.
+   - Keep `requirements.txt` (or generate it) if needed for simple deployment environments.
+
 ---
 
 ## Additional Next Steps (after immediate)
