@@ -14,7 +14,7 @@
             },
             "args": [
                 "api.main:app",
-                "--host", "0.0.0.0",
+                "--host", "::",
                 "--port", "3000",
                 "--reload"
             ],
