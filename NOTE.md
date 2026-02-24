@@ -53,3 +53,27 @@ To run the project and tests locally:
 - Add queue-based async retry/dead-letter handling for write operations during outages.
 - Add observability (metrics, tracing, structured logs, SLO dashboards).
 - Build on-prem local agent + outbound tunnel proof-of-concept for Dentrix connector path.
+
+---
+
+## Submission Checklist and Caveats
+
+### Deliverables present
+
+- `ARCHITECTURE.md`
+- `EXPLORATION.md`
+- `SYSTEM_DESIGN.md`
+- `NOTE.md` (time breakdown + next steps)
+- Additional edge-case unit tests added under `tests/`
+
+### Verification note
+
+- Full required tests are located at `tests/test_requirements.py`.
+- Recommended final verification command before submission:
+   - `python -m pytest tests/test_requirements.py -v`
+
+### Known trade-offs / cuts
+
+- Caching and idempotency are currently in-memory and process-local (intentionally done for assessment speed).
+- Production version should move these to Redis/persistent storage.
+- Legacy API instability required pragmatic retry/caching behavior; this should be hardened with circuit breakers and richer observability in production.
