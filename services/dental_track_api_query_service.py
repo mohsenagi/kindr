@@ -40,8 +40,8 @@ class DentalTrackApiQueryService:
     def __init__(
         self,
         base_url: str = "https://takehome-production.up.railway.app",
-        timeout_seconds: float = 1.5,
-        max_attempts: int = 2,
+        timeout_seconds: float = 0.9,
+        max_attempts: int = 3,
     ):
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
